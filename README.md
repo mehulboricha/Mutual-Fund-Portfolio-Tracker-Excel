@@ -17,7 +17,7 @@ Manage your household wealth without compromising your data. This tracker import
 
 ## Why This?
 
-For years, Kuvera was my go-to platform for managing and tracking Mutual Funds. It was seamless, particularly for managing a consolidated family portfolio. However, following its acquisition by Cred, the platform removed the ability to manage multiple family accounts under a single mobile number. 
+For years, Kuvera was my go-to platform for managing and tracking Mutual Funds. It was seamless, particularly for managing a consolidated family portfolio. However, following its acquisition by CRED, the platform removed the ability to manage multiple family accounts under a single mobile number. 
 
 As someone who strongly prioritizes digital privacy, linking multiple personal numbers or handing over granular financial data to third-party aggregators was not an option. I needed an alternative that was completely offline, private, and easy to use. 
 
@@ -26,7 +26,9 @@ My search for a replacement revealed a frustrating gap in the market:
 * **The Self-Hosted Route:** Overly complex, requiring dedicated servers, Docker containers, and unnecessary technical maintenance just to track numbers.
 * **The Third-Party Apps:** Closed-source applications with questionable data handling practices and vague terms of service.
 
-I needed something reliable and fully under my control. 
+To bypass these privacy issues entirely, I strongly recommend doing transactions directly via MFCentral, CAMS, KFinTech, other official RTAs, or the AMCs' official websites. But while transacting directly is secure, tracking everything across multiple family members without a central aggregator becomes a challenge. 
+
+I needed something reliable, comprehensive, and fully under my control. 
 
 **The Solution:** Good old Microsoft Excel. 
 
