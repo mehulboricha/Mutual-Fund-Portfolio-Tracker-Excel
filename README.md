@@ -12,6 +12,7 @@ Manage your household wealth without compromising your data. This tracker import
 * **Family Portfolio Summary:** Provides a consolidated, high-level overview of your entire household's wealth.
 * **Capital Gains Statements:** Generates FY-wise and PAN-wise capital gains statements broken down by Equity/Debt and LTCG/STCG.
 * **Folio Management:** Lists and organizes all your folios PAN-wise.
+* **Family Goal Tracking:** Track financial goals CAS-wide. Seamlessly map multiple mutual fund schemes and folios—even across different family members' PANs—to a single unified goal.
 
 ---
 
