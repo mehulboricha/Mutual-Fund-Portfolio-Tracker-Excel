@@ -43,6 +43,7 @@ When I set out to build this, total data isolation was my absolute, non-negotiab
 * **Auditable CAS Parsing:** To import your transactions, this project relies on a script that generates a CSV from your Consolidated Account Statement (CAS) PDF. I use a fork of the popular open-source tool [codereverser/casparser](https://github.com/codereverser/casparser). My fork is hosted at [mehulboricha/casparser](https://github.com/mehulboricha/casparser). While both repositories are currently identical, I deliberately use a fork so I can personally vet the code for privacy and security updates before running any script that touches my financial documents. 
 * **Controlled, On-Demand NAV Fetching:** Live data trackers often leak your IP and portfolio metadata through constant background syncing. Instead, NAV fetching here is strictly manual. You run a single, transparent command that fetches the latest NAVs for your specific schemes and drops them directly into the `Current NAVs` sheet. You control exactly when your machine connects to the internet.
 * **100% Offline Excel Sandbox:** The Excel file itself is a complete walled garden. There are **zero external network calls** made from within the workbook. No background web queries, no hidden APIs, and no telemetry. Once your data is in the sheet, absolutely everything is calculated locally using standard Excel formulas, internal functions, and standalone VBScript.
+* **Transparent Macros (VBA):** When you open the file, Excel will show a standard security warning: *"This workbook contains macros... Macros may contain viruses..."* **You must click Enable Macros** for the FIFO tax harvesting engine and portfolio calculations to function. Because privacy and security are paramount, you are highly encouraged to press `Alt + F11` to open the VBA editor and inspect the code yourself. You will see it only performs local data processing and makes zero external connections.
 
 ---
 
@@ -187,4 +188,57 @@ for pan in pans:
                 tax_type = np.random.choice(["STAMP_DUTY", "STT_TAX"])
                 tax_amt = round(amount * 0.0005, 2)
                 rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
-                             current_date.strftime("%d-%b-%Y"), tax_type.replace("_
+                             current_date.strftime("%d-%b-%Y"), tax_type.replace("_", " "), tax_amt, 0.0, 
+                             "", round(balance, 3), tax_type, ""])
+            
+            # Random DIVIDEND_PAYOUT
+            if np.random.rand() > 0.95 and fund["cat"] == "Equity":
+                div_amt = round(balance * 0.5, 2)
+                rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
+                             current_date.strftime("%d-%b-%Y"), "Dividend Paid", div_amt, 0.0, 
+                             "", round(balance, 3), "DIVIDEND_PAYOUT", div_amt])
+                
+            # Random Partial REDEMPTION
+            if np.random.rand() > 0.97 and balance > 50:
+                red_units = balance * 0.2
+                red_amt = red_units * nav
+                balance -= red_units
+                rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
+                             current_date.strftime("%d-%b-%Y"), "Redemption", -round(red_amt, 2), -round(red_units, 3), 
+                             round(nav, 4), round(balance, 3), "REDEMPTION", ""])
+
+            # Advance 1 month
+            current_date += timedelta(days=30)
+            
+            # Trigger complete sell-off if applicable
+            if sold_off and current_date.year == 2022 and balance > 0:
+                red_units = balance
+                red_amt = red_units * nav
+                balance = 0.0
+                rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
+                             current_date.strftime("%d-%b-%Y"), "Full Redemption", -round(red_amt, 2), -round(red_units, 3), 
+                             round(nav, 4), round(balance, 3), "REDEMPTION", ""])
+                break # Stop generating records for this sold-off fund
+
+df = pd.DataFrame(rows, columns=["amc", "folio", "pan", "scheme", "advisor", "rta", "amfi", "date", 
+                                 "description", "amount", "units", "nav", "balance", "type", "dividend"])
+
+# Output to CSV
+df.to_csv("demo_cas_data.csv", index=False)
+print(f"Successfully generated {len(df)} rows!")
+```
+
+---
+
+## Community Contributions & Acknowledgements
+
+This tracker was built to solve a personal pain point. I originally developed and tested all formulas, FIFO tax calculations, and VBA scripts using my own family's CAS data. To bring this to life, I relied on my personal knowledge, various online financial resources, and a bit of heavy lifting from AI assistants (including Google Gemini, ChatGPT, and GitHub Copilot).
+
+While I have done my absolute best to ensure the math, XIRR calculations, and tax harvesting engines are fully accurate, mutual fund portfolios can have unique edge cases. **There may be mistakes or unhandled scenarios.** I would be thrilled if you helped make this better! Here is how you can contribute to the project:
+
+* **Bug Reports:** If you spot a calculation error, a broken formula, or a macro crash, please open an **Issue** on GitHub. *(Important: Please ensure you completely anonymize your PAN, Folio numbers, and amounts before sharing any screenshots or data!)*
+* **Code & Formula Optimization:** If you are an Excel wizard and know a more efficient formula or a cleaner way to write the VBA scripts (while maintaining the zero-external-call rule), Pull Requests are incredibly welcome.
+* **Feature Requests:** Want a new metric, a different chart, or a new summary view? Let's discuss it in the Issues section.
+* **Documentation:** Found a typo in this README or know a better way to explain a setup step? Feel free to submit a fix.
+
+Whether it is pointing out a tiny typo or optimizing the VBA engine, all feedback and contributions are highly appreciated!
