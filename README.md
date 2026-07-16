@@ -1,2 +1,188 @@
-# Mutual-Fund-Portfolio-Tracker-Excel
-An advanced Excel tracker for Indian Mutual Fund family portfolios. Import parsed CAS data to automate PAN-level Current/All-Time XIRR and Absolute Returns. Features a strict FIFO tax harvesting engine for the ₹1.25L exemption and an Unrealized Gains calculator (LTCG/STCG split). Manage your household wealth entirely offline.
+# Mutual Fund Portfolio Tracker (Excel)
+
+> An advanced, fully offline Excel tracker for Indian Mutual Fund family portfolios. 
+
+Manage your household wealth without compromising your data. This tracker imports parsed CAS data to automate performance tracking and tax calculations, keeping your financial life entirely local.
+
+**Key Features:**
+* **PAN-Level Performance:** Automates PAN-level Current and All-Time XIRR, alongside All-Time and Current Gains.
+* **Scheme-Level Insights:** Tracks PAN-level MF schemes, detailing XIRR, invested amount, unrealized gains, and current value.
+* **Tax Harvesting Engine:** Features a strict FIFO tax harvesting engine for the ₹1.25L exemption.
+* **Redemption Calculator:** Simulates redemptions with detailed Equity/Debt and LTCG/STCG splits.
+* **Family Portfolio Summary:** Provides a consolidated, high-level overview of your entire household's wealth.
+* **Capital Gains Statements:** Generates FY-wise and PAN-wise capital gains statements broken down by Equity/Debt and LTCG/STCG.
+* **Folio Management:** Lists and organizes all your folios PAN-wise.
+
+---
+
+## Why This?
+
+For years, Kuvera was my go-to platform for managing and tracking Mutual Funds. It was seamless, particularly for managing a consolidated family portfolio. However, following its acquisition by Cred, the platform removed the ability to manage multiple family accounts under a single mobile number. 
+
+As someone who strongly prioritizes digital privacy, linking multiple personal numbers or handing over granular financial data to third-party aggregators was not an option. I needed an alternative that was completely offline, private, and easy to use. 
+
+My search for a replacement revealed a frustrating gap in the market:
+* **The Cloud Trackers:** Too invasive, demanding excessive phone number linkages and cloud syncing.
+* **The Self-Hosted Route:** Overly complex, requiring dedicated servers, Docker containers, and unnecessary technical maintenance just to track numbers.
+* **The Third-Party Apps:** Closed-source applications with questionable data handling practices and vague terms of service.
+
+I needed something reliable and fully under my control. 
+
+**The Solution:** Good old Microsoft Excel. 
+
+By building this tracker in a simple, everyday spreadsheet, the data stays exactly where it belongs—on your local machine. There are no servers, no hidden tracking, and no forced updates. It is a transparent, robust, and privacy-first way to manage investments without compromising on usability. 
+
+---
+
+## Privacy by Design: How Your Data Stays Yours
+
+When I set out to build this, total data isolation was my absolute, non-negotiable priority. Here is exactly how this tracker protects your financial data:
+
+* **Auditable CAS Parsing:** To import your transactions, this project relies on a script that generates a CSV from your Consolidated Account Statement (CAS) PDF. I use a fork of the popular open-source tool [codereverser/casparser](https://github.com/codereverser/casparser). My fork is hosted at [mehulboricha/casparser](https://github.com/mehulboricha/casparser). While both repositories are currently identical, I deliberately use a fork so I can personally vet the code for privacy and security updates before running any script that touches my financial documents. 
+* **Controlled, On-Demand NAV Fetching:** Live data trackers often leak your IP and portfolio metadata through constant background syncing. Instead, NAV fetching here is strictly manual. You run a single, transparent command that fetches the latest NAVs for your specific schemes and drops them directly into the `Current NAVs` sheet. You control exactly when your machine connects to the internet.
+* **100% Offline Excel Sandbox:** The Excel file itself is a complete walled garden. There are **zero external network calls** made from within the workbook. No background web queries, no hidden APIs, and no telemetry. Once your data is in the sheet, absolutely everything is calculated locally using standard Excel formulas, internal functions, and standalone VBScript.
+
+---
+
+## How to Use
+
+Follow these steps to extract your CAS data, import it into the tracker, and fetch the latest NAVs.
+
+### Phase 1: Preparing Your Computer
+
+#### -> For Mac (Continue Directly to Phase 2)
+
+#### -> For Windows
+
+* You must have Python installed and added to your system's PATH (so the python command works in PowerShell).
+* You must run the next command inside PowerShell, not the legacy Command Prompt.
+
+#### -> For Linux (X11)
+
+* Install XClip via your package manager, e.g., ```sudo apt install xclip```
+
+#### -> For Linux (Wayland)
+
+* Install wl-clipboard via your package manager, e.g., ```sudo apt install wl-clipboard```
+
+### Phase 2: Parse Your CAS PDF
+First, convert your encrypted CAS PDF into a clean CSV format using the local parser.
+
+1. Open your terminal and install the parser:
+   ```bash
+   git clone [https://github.com/mehulboricha/casparser](https://github.com/mehulboricha/casparser)
+   cd casparser
+   pipx install .
+
+2. Run the parser on your downloaded CAS PDF (replace 123456 with your actual PDF password and cas.pdf with your filename):
+   ```casparser -o cas.csv -p "123456" cas.pdf```
+
+### Phase 3: Import Data into Excel
+
+1. Now, bring the parsed data into the offline tracker.
+2. Open the CAS sheet in the Excel workbook.
+3. Press Ctrl + A to select all, then press Delete to clear any existing data.
+4. Open the newly generated cas.csv file, press Ctrl + A (select all), and then Ctrl + C (copy).
+5. Return to the CAS sheet in your Excel workbook and paste (Ctrl + V) the copied data starting from cell A1.
+
+### Phase 4: Update Current NAVs
+
+1. Since the Excel file makes no network calls, we use a clever terminal command to fetch live NAVs securely using your clipboard.
+2. Go to the Current NAVs sheet in your Excel workbook.
+3. Copy the exact command below, paste it into your Terminal, but DO NOT press Enter yet:<br/><br/>
+   <b>For Mac</b>
+   ```pbpaste | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"[https://api.mfapi.in/mf/](https://api.mfapi.in/mf/){c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | pbcopy```
+
+   <b>For Windows (PowerShell Only)</b>
+   ```(Get-Clipboard | Select-Object -Skip 1) | python -c "import sys,urllib.request; print('\n'.join(urllib.request.urlopen(f'https://api.mfapi.in/mf/{c.strip()}/latest',timeout=30).read().decode().replace('\n','') if c.strip().isdigit() else '' for c in sys.stdin))" | Set-Clipboard```
+
+   <b>For Linux (X11)</b>
+   ```xclip -selection clipboard -o | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"https://api.mfapi.in/mf/{c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | xclip -selection clipboard```
+5. Go back to Excel and select Column B in the Current NAVs sheet, then copy it (Cmd + C). (This loads your scheme codes into the clipboard).
+6. Return to your Terminal and press Enter to run the script.
+7. Wait a few seconds for the script to finish processing (it will automatically copy the fetched NAV data back to your clipboard).
+8. Return to the Current NAVs sheet, click on cell E2, and paste (Cmd + V).
+
+### Phase 5: Customize Your Excel Sheet (One-Time Setup)
+
+To make future updates as frictionless as possible, I have included the essential terminal commands directly inside the Excel workbook on the **Current NAVs** sheet. This saves you from having to revisit this README every time you want to update your portfolio!
+
+Take a minute to customize these cells for your specific setup:
+
+**1. Update the Casparser Command**
+On the right side of the sheet, you will find the default CAS parsing command:
+```bash
+casparser -o cas.csv -p "123456" cas.pdf
+```
+Double-click this cell and replace `"123456"` with your actual CAS PDF password, and `cas.pdf` with the standard filename you use. Now, whenever you get a new statement, your exact command is ready to copy.
+
+**2. Update the Dynamic NAV Command**
+By default, the spreadsheet contains the Mac terminal command for fetching live NAVs. If you are using Windows or Linux:
+* Copy your OS-specific command from **Phase 4** above.
+* Double-click the cell containing the Mac command in the Excel sheet.
+* Delete the existing text and paste your new command.
+
+Save the workbook (`Ctrl + S` or `Cmd + S`). Now, everything you need to track and update your wealth is fully self-contained within your local Excel file!
+
+---
+
+## Demo CSV Generation Steps
+
+If you want to test the tracker before importing your actual financial data, you can generate a dummy CAS dataset using Google Colab.
+
+1. Go to [Google Colab](https://colab.research.google.com/) and click **New Notebook**.
+2. Paste the Python code below into the first cell.
+3. Click the **Play** button (or press `Shift + Enter`) to run the code.
+4. Once the script outputs *"Successfully generated [X] rows!"*, click the **Folder icon** on the far-left sidebar.
+5. Locate `demo_cas_data.csv`, click the three dots next to it, and select **Download**.
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+# Configurations based on your inputs
+pans = ["AAAAA1111A", "BBBBB2222B", "CCCCC3333C", "DDDDD4444D"]
+start_date = datetime(2010, 1, 1)
+end_date = datetime(2026, 7, 1)
+
+schemes = [
+    {"amc": "HDFC Mutual Fund", "scheme": "HDFC Flexi Cap Fund - Direct Plan - Growth", "amfi": "119062", "cat": "Equity"},
+    {"amc": "Parag Parikh Mutual Fund", "scheme": "Parag Parikh Flexi Cap Fund - Direct Growth", "amfi": "122639", "cat": "Equity"},
+    {"amc": "SBI Mutual Fund", "scheme": "SBI Liquid Fund Direct Growth", "amfi": "119598", "cat": "Debt"},
+    {"amc": "ICICI Prudential Mutual Fund", "scheme": "ICICI Pru Equity & Debt Fund - Direct Growth", "amfi": "120664", "cat": "Equity"},
+    {"amc": "Axis Mutual Fund", "scheme": "Axis ELSS Tax Saver Fund - Direct Growth", "amfi": "112323", "cat": "Equity"} # Sold off scenario
+]
+
+rows = []
+
+# Generate data for each PAN
+for pan in pans:
+    for idx, fund in enumerate(schemes):
+        folio = f"{pan[:4]}999{idx}"
+        current_date = start_date + timedelta(days=np.random.randint(0, 365))
+        nav = 20.0
+        balance = 0.0
+        
+        # Determine if this fund should be completely sold off to test All-Time XIRR
+        sold_off = True if "Axis" in fund["scheme"] else False
+        
+        while current_date < end_date:
+            # Random NAV growth
+            nav *= (1 + np.random.uniform(-0.02, 0.03)) 
+            
+            # Monthly SIP Simulation
+            amount = 5000.0
+            units = amount / nav
+            balance += units
+            
+            rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
+                         current_date.strftime("%d-%b-%Y"), "Purchase - SIP", amount, round(units, 3), 
+                         round(nav, 4), round(balance, 3), "PURCHASE_SIP", ""])
+            
+            # Random STAMP_DUTY / STT_TAX (Zero Unit Rows)
+            if np.random.rand() > 0.8:
+                tax_type = np.random.choice(["STAMP_DUTY", "STT_TAX"])
+                tax_amt = round(amount * 0.0005, 2)
+                rows.append([fund["amc"], folio, pan, fund["scheme"], "DIRECT", "CAMS", fund["amfi"], 
+                             current_date.strftime("%d-%b-%Y"), tax_type.replace("_
