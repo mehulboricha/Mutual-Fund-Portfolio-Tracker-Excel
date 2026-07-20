@@ -7,14 +7,22 @@ Manage your household wealth without compromising your data. This tracker import
 **Key Features:**
 * **PAN-Level Performance:** Automates PAN-level Current and All-Time XIRR, alongside All-Time and Current Gains.
 * **Scheme-Level Insights:** Tracks PAN-level MF schemes, detailing XIRR, invested amount, unrealized gains, and current value.
+![Mutual Funds Portfolio Summary](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Mutual%20Funds%20Portfolio%20Summary.png)
 * **Tax Harvesting Engine:** Features a strict FIFO tax harvesting engine for the ₹1.25L exemption.
+![Tax Harvesting](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Tax%20Harvesting.png)
 * **Redemption Calculator:** Simulates redemptions with detailed Equity/Debt and LTCG/STCG splits.
+![Redemption Calculator](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Redemption%20Calculator.png)
 * **Family Portfolio Summary:** Provides a consolidated, high-level overview of your entire household's wealth.
+![Family Portfolio Summary](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Family%20Portfolio%20Summary.png)
 * **Portfolio Allocation Summary:** Provides a consolidated and per PAN overview of Equity & Debt allocation as per defined rules.
 * **Capital Gains Statements:** Generates FY-wise and PAN-wise capital gains statements broken down by Equity/Debt and LTCG/STCG.
+![Capital Gains](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Capital%20Gains.png)
 * **Folio Management:** Lists and organizes all your folios PAN-wise.
+![PAN Mapper & Folios List](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/PAN%20Mapper%20%26%20Folios%20List.png)
 * **Family Goal Tracking:** Track financial goals CAS-wide. Seamlessly map multiple mutual fund schemes and folios—even across different family members' PANs—to a single unified goal.
+![Goals](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Goals.png)
 * **Mutual Fund Calculators:** Lumpsum/SIP Calculator, SWP Calculator and IDCW Calculator.
+![Lumpsum SIP SWP IDCW Calculators](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/Lumpsum%20SIP%20SWP%20IDCW%20Calculators.png)
 
 ---
 
@@ -247,7 +255,11 @@ xclip -selection clipboard -o | tail -n +2 | python3 -c 'import sys,urllib.reque
 6. Wait a few seconds for the script to finish processing (it will automatically copy the fetched NAV data back to your clipboard).
 7. Return to the Current NAVs sheet, click on cell E2, and paste (Cmd + V).
 
-### Phase 5: Customize Your Excel Sheet (One-Time Setup)
+### Phase 5: Update FIFO_Split_Ledger
+
+Everytime you update CAS, if you want accurate Capital Gains calculation then go to "Capital Gains" sheet and Click on "Click to Update Ledger"
+
+### Phase 6: Customize Your Excel Sheet (One-Time Setup)
 
 To make future updates as frictionless as possible, I have included the essential terminal commands directly inside the Excel workbook on the **Current NAVs** sheet. This saves you from having to revisit this README every time you want to update your portfolio!
 
@@ -274,7 +286,9 @@ Save the workbook (`Ctrl + S` or `Cmd + S`). Now, everything you need to track a
 
 1. Go to [CAMS CAS Download Page](https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement) or [KFin Tech CAS Download Page](https://mfs.kfintech.com/investor/General/ConsolidatedAccountStatement)
 2. On CAMS you will see something like this.
+   ![CAMS CAS](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/CAMS%20CAS.png)
 3. On KFin Tech you will see something like this.
+   ![KFin Tech CAS](https://github.com/mehulboricha/Mutual-Fund-Portfolio-Tracker-Excel/blob/main/Screenshots/KFin%20Tech%20CAS.png)
 4. Enter the details as per following:
    Statement Type: Detailed
    Period: Select Date before you started investing upto TODAY
