@@ -10,9 +10,11 @@ Manage your household wealth without compromising your data. This tracker import
 * **Tax Harvesting Engine:** Features a strict FIFO tax harvesting engine for the ₹1.25L exemption.
 * **Redemption Calculator:** Simulates redemptions with detailed Equity/Debt and LTCG/STCG splits.
 * **Family Portfolio Summary:** Provides a consolidated, high-level overview of your entire household's wealth.
+* **Portfolio Allocation Summary:** Provides a consolidated and per PAN overview of Equity & Debt allocation as per defined rules.
 * **Capital Gains Statements:** Generates FY-wise and PAN-wise capital gains statements broken down by Equity/Debt and LTCG/STCG.
 * **Folio Management:** Lists and organizes all your folios PAN-wise.
 * **Family Goal Tracking:** Track financial goals CAS-wide. Seamlessly map multiple mutual fund schemes and folios—even across different family members' PANs—to a single unified goal.
+* **Mutual Fund Calculators:** Lumpsum/SIP Calculator, SWP Calculator and IDCW Calculator.
 
 ---
 
