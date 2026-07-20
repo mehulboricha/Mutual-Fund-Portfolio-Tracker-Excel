@@ -250,6 +250,11 @@ pbpaste | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(ur
 xclip -selection clipboard -o | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"https://api.mfapi.in/mf/{c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | xclip -selection clipboard
 ```
 
+<b>For Linux (Wayland)</b>
+```
+wl-paste | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"https://api.mfapi.in/mf/{c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | wl-copy
+```
+
 4. Go back to Excel and select Column B in the Current NAVs sheet, then copy it (Cmd + C). (This loads your scheme codes into the clipboard).
 5. Return to your Terminal and press Enter to run the script.
 6. Wait a few seconds for the script to finish processing (it will automatically copy the fetched NAV data back to your clipboard).
