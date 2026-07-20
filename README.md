@@ -75,13 +75,19 @@ Follow these steps to extract your CAS data, import it into the tracker, and fet
 First, convert your encrypted CAS PDF into a clean CSV format using the local parser.
 
 1. Open your terminal and install the parser:
-   ```bash
-   git clone [https://github.com/mehulboricha/casparser](https://github.com/mehulboricha/casparser)
-   cd casparser
-   pipx install .
+
+```
+bash
+git clone [https://github.com/mehulboricha/casparser](https://github.com/mehulboricha/casparser)
+cd casparser
+pipx install .
+```
 
 2. Run the parser on your downloaded CAS PDF (replace 123456 with your actual PDF password and cas.pdf with your filename):
-   ```casparser -o cas.csv -p "123456" cas.pdf```
+
+```
+casparser -o cas.csv -p "123456" cas.pdf
+```
 
 ### Phase 3: Import Data into Excel
 
@@ -93,21 +99,153 @@ First, convert your encrypted CAS PDF into a clean CSV format using the local pa
 
 ### Phase 4: Update Current NAVs
 
+#### Method 1 - Using Script in Automate (Recommended)
+
+1. Go to Automate Tab.
+2. Click New Script -> Create in Code Editor.
+3. Paste the following code:
+
+```
+// Define the shape of the JSON so TypeScript doesn't complain
+interface MFResponse {
+  meta?: {
+    scheme_code?: string | number;
+  };
+  data?: {
+    date?: string;
+  }[];
+}
+
+async function main(workbook: ExcelScript.Workbook) {
+  // 1. Connect to the specific sheet
+  let sheet = workbook.getWorksheet("Current NAVs");
+  if (!sheet) {
+    console.log("Could not find a sheet named 'Current NAVs'");
+    return;
+  }
+
+  // 2. Get today's date formatted as dd-mm-yyyy (matching the API format)
+  let today = new Date();
+  let dd = String(today.getDate()).padStart(2, '0');
+  let mm = String(today.getMonth() + 1).padStart(2, '0');
+  let yyyy = today.getFullYear();
+  let todayStr = `${dd}-${mm}-${yyyy}`;
+
+  // 3. Find the last used row in the sheet
+  let usedRange = sheet.getUsedRange();
+  let rowCount = usedRange.getRowCount();
+
+  console.log(`Checking up to row ${rowCount}...`);
+
+  // 4. Loop through each row starting at Row 2 (Index 1)
+  for (let i = 1; i < rowCount; i++) {
+    let bVal: string = sheet.getCell(i, 1).getValue().toString().trim(); // Column B: Scheme Code
+
+    // If Column B has a value, process it
+    if (bVal !== "") {
+
+      // Explicitly declare types
+      let dVal: string | number | boolean = sheet.getCell(i, 3).getValue(); // Column D: Total Units
+      let eVal: string = sheet.getCell(i, 4).getValue().toString().trim(); // Column E: Existing JSON
+      let gText: string = sheet.getCell(i, 6).getText().trim(); // Column G: Date (Index 6)
+
+      // --- OPTIMIZATION CHECK START --- //
+
+      // Condition A: Is Total Units exactly 0? 
+      let isUnitsZero: boolean = (dVal === 0 || dVal === "0" || dVal === 0.0);
+
+      let hasMatchingScheme: boolean = false;
+      let isDateToday: boolean = false;
+
+      // Condition B: Does Column G text match today's date?
+      if (gText === todayStr || gText === `${mm}/${dd}/${yyyy}` || gText === `${today.getMonth() + 1}/${today.getDate()}/${yyyy}`) {
+        isDateToday = true;
+      }
+
+      // Condition C: JSON Validation & Fallback Date Check
+      if (eVal !== "") {
+        try {
+          // Cast the parsed JSON to our custom interface
+          let parsedJson = JSON.parse(eVal) as MFResponse;
+
+          if (parsedJson.meta && parsedJson.meta.scheme_code == bVal) {
+            hasMatchingScheme = true;
+          }
+
+          // Fallback: If Column G is formatted weirdly by Excel, reliably check the JSON date
+          if (parsedJson.data && parsedJson.data[0] && parsedJson.data[0].date === todayStr) {
+            isDateToday = true;
+          }
+        } catch {
+          // Fails safely if JSON is invalid or blank
+        }
+      }
+
+      // The Skip Action: Skip if (Units are 0 and matched) OR (Date is already today)
+      if ((isUnitsZero && hasMatchingScheme) || isDateToday) {
+        console.log(`Row ${i + 1} Skipped: Units are 0 or Date is already updated today.`);
+        continue;
+      }
+
+      // --- OPTIMIZATION CHECK END --- //
+
+
+      // If it didn't skip, construct the URL and fetch the API
+      let url: string = `https://api.mfapi.in/mf/${bVal}/latest`;
+
+      try {
+        let response = await fetch(url);
+
+        if (response.ok) {
+          let jsonText: string = await response.text();
+          sheet.getCell(i, 4).setValue(jsonText);
+        } else {
+          sheet.getCell(i, 4).setValue("API Error: " + response.status);
+        }
+      } catch {
+        sheet.getCell(i, 4).setValue("Fetch Failed");
+      }
+
+    } else {
+      // --- STALE DATA CLEANUP --- //
+      // If Column B is empty, ensure Column E is also empty
+      let eVal: string = sheet.getCell(i, 4).getValue().toString().trim();
+      if (eVal !== "") {
+        sheet.getCell(i, 4).setValue("");
+        console.log(`Row ${i + 1} Cleared: Scheme code in Column B was removed.`);
+      }
+    }
+  }
+
+  console.log("Done fetching API data!");
+}
+```
+
+#### Method 2 - Using API Call in Python
+
 1. Since the Excel file makes no network calls, we use a clever terminal command to fetch live NAVs securely using your clipboard.
 2. Go to the Current NAVs sheet in your Excel workbook.
 3. Copy the exact command below, paste it into your Terminal, but DO NOT press Enter yet:<br/><br/>
-   <b>For Mac</b>
-   ```pbpaste | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"[https://api.mfapi.in/mf/](https://api.mfapi.in/mf/){c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | pbcopy```
 
-   <b>For Windows (PowerShell Only)</b>
-   ```(Get-Clipboard | Select-Object -Skip 1) | python -c "import sys,urllib.request; print('\n'.join(urllib.request.urlopen(f'https://api.mfapi.in/mf/{c.strip()}/latest',timeout=30).read().decode().replace('\n','') if c.strip().isdigit() else '' for c in sys.stdin))" | Set-Clipboard```
+<b>For Mac</b>
+```
+pbpaste | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"[https://api.mfapi.in/mf/](https://api.mfapi.in/mf/){c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | pbcopy
+```
 
-   <b>For Linux (X11)</b>
-   ```xclip -selection clipboard -o | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"https://api.mfapi.in/mf/{c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | xclip -selection clipboard```
-5. Go back to Excel and select Column B in the Current NAVs sheet, then copy it (Cmd + C). (This loads your scheme codes into the clipboard).
-6. Return to your Terminal and press Enter to run the script.
-7. Wait a few seconds for the script to finish processing (it will automatically copy the fetched NAV data back to your clipboard).
-8. Return to the Current NAVs sheet, click on cell E2, and paste (Cmd + V).
+<b>For Windows (PowerShell Only)</b>
+```
+(Get-Clipboard | Select-Object -Skip 1) | python -c "import sys,urllib.request; print('\n'.join(urllib.request.urlopen(f'https://api.mfapi.in/mf/{c.strip()}/latest',timeout=30).read().decode().replace('\n','') if c.strip().isdigit() else '' for c in sys.stdin))" | Set-Clipboard
+```
+
+<b>For Linux (X11)</b>
+```
+xclip -selection clipboard -o | tail -n +2 | python3 -c 'import sys,urllib.request; print("\n".join(urllib.request.urlopen(f"https://api.mfapi.in/mf/{c.strip()}/latest",timeout=30).read().decode().replace("\n","") if c.strip().isdigit() else "" for c in sys.stdin))' | xclip -selection clipboard
+```
+
+4. Go back to Excel and select Column B in the Current NAVs sheet, then copy it (Cmd + C). (This loads your scheme codes into the clipboard).
+5. Return to your Terminal and press Enter to run the script.
+6. Wait a few seconds for the script to finish processing (it will automatically copy the fetched NAV data back to your clipboard).
+7. Return to the Current NAVs sheet, click on cell E2, and paste (Cmd + V).
 
 ### Phase 5: Customize Your Excel Sheet (One-Time Setup)
 
@@ -117,7 +255,7 @@ Take a minute to customize these cells for your specific setup:
 
 **1. Update the Casparser Command**
 On the right side of the sheet, you will find the default CAS parsing command:
-```bash
+```
 casparser -o cas.csv -p "123456" cas.pdf
 ```
 Double-click this cell and replace `"123456"` with your actual CAS PDF password, and `cas.pdf` with the standard filename you use. Now, whenever you get a new statement, your exact command is ready to copy.
@@ -142,7 +280,8 @@ If you want to test the tracker before importing your actual financial data, you
 4. Once the script outputs *"Successfully generated [X] rows!"*, click the **Folder icon** on the far-left sidebar.
 5. Locate `demo_cas_data.csv`, click the three dots next to it, and select **Download**.
 
-```python
+```
+python
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
