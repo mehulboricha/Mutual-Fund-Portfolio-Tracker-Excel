@@ -270,6 +270,22 @@ Save the workbook (`Ctrl + S` or `Cmd + S`). Now, everything you need to track a
 
 ---
 
+## How to Get CAS via CAMS or KFin Tech
+
+1. Go to [CAMS CAS Download Page](https://www.camsonline.com/Investors/Statements/Consolidated-Account-Statement) or [KFin Tech CAS Download Page](https://mfs.kfintech.com/investor/General/ConsolidatedAccountStatement)
+2. On CAMS you will see something like this.
+3. On KFin Tech you will see something like this.
+4. Enter the details as per following:
+   Statement Type: Detailed
+   Period: Select Date before you started investing upto TODAY
+   Folio Listing: Select With Zero Balance Folios
+   Email: Entered Email Registered with AMCs
+   PAN: Keep Empty if you have multiple PANs associated with same details.
+   Password: Password for the generated PDF.
+5. You will receive CAS via email shortly.
+
+---
+
 ## Demo CSV Generation Steps
 
 If you want to test the tracker before importing your actual financial data, you can generate a dummy CAS dataset using Google Colab.
